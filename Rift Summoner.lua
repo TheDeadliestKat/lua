@@ -48,27 +48,69 @@ local UICornerToggle = Instance.new("UICorner")
 UICornerToggle.CornerRadius = UDim.new(0, 6)
 UICornerToggle.Parent = ToggleButton
 
--- Dropdown for World
-local WorldDropdown = Instance.new("TextBox")
-WorldDropdown.Size = UDim2.new(1, -20, 0, 30)
-WorldDropdown.Position = UDim2.new(0, 10, 0, 60)
-WorldDropdown.PlaceholderText = "Enter World (e.g., Minigame Paradise, The Overworld)"
-WorldDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-WorldDropdown.TextColor3 = Color3.new(1, 1, 1)
-WorldDropdown.Font = Enum.Font.SourceSans
-WorldDropdown.TextScaled = true
-WorldDropdown.Parent = MainFrame
+-- Utility function to create dropdown
+local function createDropdown(parent, position, placeholder, options, openUpwards)
+	local dropdown = Instance.new("TextButton")
+	dropdown.Size = UDim2.new(1, -20, 0, 30)
+	dropdown.Position = position
+	dropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	dropdown.TextColor3 = Color3.new(1, 1, 1)
+	dropdown.Font = Enum.Font.SourceSans
+	dropdown.Text = placeholder
+	dropdown.TextWrapped = true
+	dropdown.TextSize = 16
+	dropdown.Parent = parent
 
--- Dropdown for Egg
-local EggDropdown = Instance.new("TextBox")
-EggDropdown.Size = UDim2.new(1, -20, 0, 30)
-EggDropdown.Position = UDim2.new(0, 10, 0, 100)
-EggDropdown.PlaceholderText = "Enter Egg Name (e.g., Mining Egg)"
-EggDropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-EggDropdown.TextColor3 = Color3.new(1, 1, 1)
-EggDropdown.Font = Enum.Font.SourceSans
-EggDropdown.TextScaled = true
-EggDropdown.Parent = MainFrame
+	local dropdownHeight = #options * 25
+
+	local dropdownFrame = Instance.new("Frame")
+	dropdownFrame.Size = UDim2.new(1, -20, 0, dropdownHeight)
+	dropdownFrame.Position = openUpwards
+		and UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset - dropdownHeight)
+		or UDim2.new(position.X.Scale, position.X.Offset, position.Y.Scale, position.Y.Offset + 30)
+	dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	dropdownFrame.Visible = false
+	dropdownFrame.ClipsDescendants = true
+	dropdownFrame.ZIndex = 2
+	dropdownFrame.Parent = parent
+
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 0)
+	layout.Parent = dropdownFrame
+
+	for _, option in ipairs(options) do
+		local item = Instance.new("TextButton")
+		item.Size = UDim2.new(1, 0, 0, 25)
+		item.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+		item.TextColor3 = Color3.new(1, 1, 1)
+		item.Font = Enum.Font.SourceSans
+		item.Text = option
+		item.TextWrapped = true
+		item.TextSize = 14
+		item.ZIndex = 3
+		item.Parent = dropdownFrame
+
+		item.MouseButton1Click:Connect(function()
+			dropdown.Text = option
+			dropdownFrame.Visible = false
+		end)
+	end
+
+	dropdown.MouseButton1Click:Connect(function()
+		dropdownFrame.Visible = not dropdownFrame.Visible
+	end)
+
+	return dropdown
+end
+
+-- World Dropdown (open upwards)
+local worldOptions = {"The Overworld", "Minigame Paradise"}
+local WorldDropdown = createDropdown(MainFrame, UDim2.new(0, 10, 0, 60), "Select World", worldOptions, true)
+
+-- Egg Dropdown (open downwards)
+local eggOptions = {"Spikey Egg", "Magma Egg", "Crystal Egg", "Lunar Egg", "Void Egg", "Hell Egg", "Nightmare Egg", "Rainbow Egg", "Mining Egg", "Cyber Egg", "Neon Egg"}
+local EggDropdown = createDropdown(MainFrame, UDim2.new(0, 10, 0, 100), "Select Egg", eggOptions, false)
 
 -- Timer Display
 local TimerLabel = Instance.new("TextLabel")
@@ -87,8 +129,8 @@ local countdown = 0
 
 -- Function to trigger SummonRift
 local function summon()
-    local egg = EggDropdown.Text ~= "" and EggDropdown.Text or "Mining Egg"
-    local world = WorldDropdown.Text ~= "" and WorldDropdown.Text or "Minigame Paradise"
+    local egg = EggDropdown.Text
+    local world = WorldDropdown.Text
 
     local args = {
         "SummonRift",
