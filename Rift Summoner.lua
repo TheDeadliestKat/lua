@@ -109,7 +109,7 @@ local worldOptions = {"The Overworld", "Minigame Paradise"}
 local WorldDropdown = createDropdown(MainFrame, UDim2.new(0, 10, 0, 60), "Select World", worldOptions, true)
 
 -- Egg Dropdown (open downwards)
-local eggOptions = {"Spikey Egg", "Magma Egg", "Crystal Egg", "Lunar Egg", "Void Egg", "Hell Egg", "Nightmare Egg", "Rainbow Egg", "Mining Egg", "Cyber Egg", "Neon Egg"}
+local eggOptions = {"Spikey Egg", "Magma Egg", "Crystal Egg", "Lunar Egg", "Void Egg", "Hell Egg", "Nightmare Egg", "Rainbow Egg", "Mining Egg", "Cyber Egg", "Neon Egg", "Bee Egg"}
 local EggDropdown = createDropdown(MainFrame, UDim2.new(0, 10, 0, 100), "Select Egg", eggOptions, false)
 
 -- Timer Display
