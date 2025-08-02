@@ -52,26 +52,6 @@ local UICornerToggle = Instance.new("UICorner")
 UICornerToggle.CornerRadius = UDim.new(0, 6)
 UICornerToggle.Parent = ToggleButton
 
--- Minimize Button (Top-Left)
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 15, 0, 15)
-MinimizeButton.Position = UDim2.new(0, 5, 0, 5)
-MinimizeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-MinimizeButton.Text = "-"
-MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinimizeButton.TextScaled = true
-MinimizeButton.Font = Enum.Font.SourceSansBold
-MinimizeButton.ZIndex = 3
-MinimizeButton.Parent = MainFrame
-
-local UICornerMinimize = Instance.new("UICorner")
-UICornerMinimize.CornerRadius = UDim.new(0, 4)
-UICornerMinimize.Parent = MinimizeButton
-
-MinimizeButton.MouseButton1Click:Connect(function()
-	ScreenGui.Enabled = not ScreenGui.Enabled
-end)
-
 -- Dropdown creator
 local function createDropdown(parent, position, placeholder, options, openUpwards)
 	local dropdown = Instance.new("TextButton")
@@ -214,4 +194,3 @@ spawn(function()
 		wait(1)
 	end
 end)
-
