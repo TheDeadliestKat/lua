@@ -1,0 +1,207 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local SwingSaber = ReplicatedStorage:WaitForChild("Events"):WaitForChild("SwingSaber")
+
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "AutofarmGUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- Toggle Autofarm Button
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 140, 0, 40)
+ToggleButton.Position = UDim2.new(0, 20, 0, 20)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+ToggleButton.Text = "Start Autofarm"
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.Parent = ScreenGui
+
+-- Save Position Button (moved below Toggle)
+local SavePosButton = Instance.new("TextButton")
+SavePosButton.Size = UDim2.new(0, 140, 0, 40)
+SavePosButton.Position = UDim2.new(0, 20, 0, 70)
+SavePosButton.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+SavePosButton.Text = "Save Location"
+SavePosButton.Active = true
+SavePosButton.Draggable = true
+SavePosButton.Parent = ScreenGui
+
+-- Unload Button (stays in original place)
+local UnloadButton = Instance.new("TextButton")
+UnloadButton.Size = UDim2.new(0, 140, 0, 40)
+UnloadButton.Position = UDim2.new(0, 170, 0, 20)
+UnloadButton.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+UnloadButton.Text = "Unload Script"
+UnloadButton.Active = true
+UnloadButton.Draggable = true
+UnloadButton.Parent = ScreenGui
+
+-- Auto Hatch Button (moved below Unload)
+local HatchButton = Instance.new("TextButton")
+HatchButton.Size = UDim2.new(0, 140, 0, 40)
+HatchButton.Position = UDim2.new(0, 170, 0, 70)
+HatchButton.BackgroundColor3 = Color3.fromRGB(255, 255, 100)
+HatchButton.Text = "Start Auto Hatch"
+HatchButton.Active = true
+HatchButton.Draggable = true
+HatchButton.Parent = ScreenGui
+
+-- State
+local farming = true
+local running = true
+local savedCFrame = nil
+local autoHatch = false
+
+local function updateButton()
+    ToggleButton.Text = farming and "Stop Autofarm" or "Start Autofarm"
+    ToggleButton.BackgroundColor3 = farming and Color3.fromRGB(85, 255, 85) or Color3.fromRGB(255, 85, 85)
+end
+
+ToggleButton.MouseButton1Click:Connect(function()
+    farming = not farming
+    updateButton()
+end)
+
+UnloadButton.MouseButton1Click:Connect(function()
+    farming = false
+    running = false
+    ScreenGui:Destroy()
+end)
+
+SavePosButton.MouseButton1Click:Connect(function()
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        savedCFrame = hrp.CFrame
+        SavePosButton.Text = "Location Saved"
+        SavePosButton.BackgroundColor3 = Color3.fromRGB(85, 255, 255)
+    else
+        SavePosButton.Text = "Save Failed"
+        SavePosButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    end
+end)
+
+HatchButton.MouseButton1Click:Connect(function()
+    autoHatch = not autoHatch
+    HatchButton.Text = autoHatch and "Stop Auto Hatch" or "Start Auto Hatch"
+    HatchButton.BackgroundColor3 = autoHatch and Color3.fromRGB(200, 255, 100) or Color3.fromRGB(255, 255, 100)
+end)
+
+-- Target search
+local function findAliveTargets()
+    local targets = {}
+    local regions = workspace:FindFirstChild("Gameplay") and workspace.Gameplay:FindFirstChild("Boss")
+    if not regions then return targets end
+
+    for _, obj in pairs(regions:GetDescendants()) do
+        if obj:IsA("Model") and (obj.Name == "Fire Golem" or obj.Name == "Master Fire Boss" or obj.Name == "Advanced Fire Boss" or obj.Name == "Boss") then
+            local hrp = obj:FindFirstChild("HumanoidRootPart")
+            if hrp and hrp:IsA("BasePart") and hrp.Parent == obj then
+                table.insert(targets, obj)
+            end
+        end
+    end
+    return targets
+end
+
+-- Attack loop
+local function attackTarget(model)
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local myHRP = char:WaitForChild("HumanoidRootPart")
+    local targetHRP = model:FindFirstChild("HumanoidRootPart")
+    if not myHRP or not targetHRP then return end
+
+    print("[AUTO] Attacking:", model:GetFullName())
+
+    local function equipFirstTool()
+        local backpack = LocalPlayer:FindFirstChild("Backpack")
+        local firstTool = nil
+
+        if backpack then
+            for _, tool in ipairs(backpack:GetChildren()) do
+                if tool:IsA("Tool") then
+                    firstTool = tool
+                    break
+                end
+            end
+        end
+
+        if not firstTool then
+            for _, tool in ipairs(char:GetChildren()) do
+                if tool:IsA("Tool") then
+                    firstTool = tool
+                    break
+                end
+            end
+        end
+
+        if firstTool and backpack then
+            LocalPlayer.Character.Humanoid:EquipTool(firstTool)
+        end
+    end
+
+    equipFirstTool()
+
+    while farming and running and targetHRP and targetHRP.Parent == model do
+        myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, -3)
+        SwingSaber:FireServer()
+
+        local tool = char:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("RemoteClick") then
+            tool.RemoteClick:FireServer()
+        end
+
+        task.wait(1)
+        targetHRP = model:FindFirstChild("HumanoidRootPart")
+    end
+end
+
+-- Main loop
+task.spawn(function()
+    updateButton()
+    while running do
+        if farming then
+            local enemies = findAliveTargets()
+            for _, enemy in ipairs(enemies) do
+                if not farming or not running then break end
+                attackTarget(enemy)
+                task.wait(0.2)
+            end
+
+            local stillAlive = #findAliveTargets() > 0
+            if not stillAlive and savedCFrame then
+                local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                local myHRP = char:FindFirstChild("HumanoidRootPart")
+                if myHRP then
+                    myHRP.CFrame = savedCFrame
+                    task.wait(0.2)
+                end
+            end
+        end
+        task.wait(0.5)
+    end
+end)
+
+-- Always-active SwingSaber loop (runs in parallel)
+task.spawn(function()
+    while running do
+        SwingSaber:FireServer()
+        task.wait(0.1)
+    end
+end)
+
+-- Auto Hatch loop
+task.spawn(function()
+    while running do
+        if autoHatch then
+            local args = { "BuyEgg", "FH Egg" }
+            ReplicatedStorage:WaitForChild("Events"):WaitForChild("UIAction"):FireServer(unpack(args))
+        end
+        task.wait(1)
+    end
+end)
