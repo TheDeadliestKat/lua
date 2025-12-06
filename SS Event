@@ -199,7 +199,7 @@ end)
 task.spawn(function()
     while running do
         if autoHatch then
-            local args = { "BuyEgg", "FJ Egg" }
+            local args = { "BuyEgg", "FK Egg" }
             ReplicatedStorage:WaitForChild("Events"):WaitForChild("UIAction"):FireServer(unpack(args))
         end
         task.wait(1)
